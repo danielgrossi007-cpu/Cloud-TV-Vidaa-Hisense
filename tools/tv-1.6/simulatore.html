@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<title>Simulatore Daniel Home</title>
+<style>
+  html, body { margin: 0; height: 100%; background: #000; overflow: hidden; }
+  #stage { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; transform-origin: 0 0; overflow: hidden; }
+</style>
+</head>
+<body>
+<!-- Simulatore per provare native-home.js sul PC (non serve sulla TV).
+     Frecce = telecomando, Invio = OK, Backspace = Indietro.
+     Avvio: dalla cartella "OS definitivo TV":  python -m http.server 8790  e apri
+     http://localhost:8790/strumenti/tv-1.6/simulatore.html -->
+<div id="stage"><div id="app"></div></div>
+<script src="https://cdn.jsdelivr.net/npm/vue@2.7.16/dist/vue.min.js"></script>
+<script>
+(function () {
+  var APPS = ['Netflix', 'YouTube', 'Prime Video', 'Disney+', 'RaiPlay', 'Spotify', 'Mediaset Infinity', 'Paramount+', 'Apple TV', 'DAZN', 'LA7', 'TIMVISION', 'Rakuten TV', 'Crunchyroll', 'Xbox', 'Browser', 'App Store', 'TV'];
+  var apps = APPS.map(function (n, i) { return { appId: String(100 + i), appName: n, img: '' }; });
+  var inputs = [
+    { sourceId: 'TV', sourceType: 'physicalInput', name: 'TV', hasSignal: true },
+    { sourceId: 'HDMI1', sourceType: 'physicalInput', name: 'HDMI1', rename: 'PlayStation 5', hasSignal: true },
+    { sourceId: 'HDMI3', sourceType: 'physicalInput', name: 'HDMI3', rename: 'Soundbar', hasSignal: true, sourceLocked: true }
+  ];
+  function service(name) {
+    return {
+      getData: function () { return { result: name === 'app-service' ? apps : name === 'all-inputs' ? inputs : [] }; },
+      invoke: function () { return null; }
+    };
+  }
+  function SDK() {
+    this.me = { req: service };
+    this.apc = { start: function (o) { console.log('[sim] avvio app', o.name); } };
+    this.message = { on: function () {}, off: function () {} };
+  }
+  if (/[?&]scena=/.test(location.search)) { try { localStorage.clear(); } catch (e) {} }   // ogni scena parte pulita
+  self._V_SDK_ = { vre: { SDK: SDK }, vui: {}, router: { router: { currentRoute: { path: '/0/Launcher' }, getRoutes: function () { return []; } } } };
+  self._V_M_ = {
+    launcher: function () { return { route: [{ path: '/0/Launcher', component: null }] }; },
+    setting: function () { return { page: { settings: function () { console.log('[sim] impostazioni VIDAA'); } } }; }
+  };
+})();
+</script>
+<script src="../../native-home.js"></script>
+<script>
+(function () {
+  var c = self.__CODEX_NATIVE_HOME__;
+  c.config.WALL_BASE = '../../daniel-home-assets/wallpapers/';
+  c.config.APP_ICON_BASE = '../../daniel-home-assets/app-icons/';
+  self._V_M_.launcher();
+  new Vue({ el: '#app', render: function (h) { return h(c.component); } });
+  function fit() { var s = /[?&]raw=1/.test(location.search) ? 1 : Math.min(innerWidth / 1920, innerHeight / 1080); document.getElementById('stage').style.transform = 'scale(' + s + ')'; }
+  addEventListener('resize', fit); fit();
+  // ?scena=home | barra | nascondi | riordinata | saluto | avviso  (per vedere subito una schermata)
+  var m = /[?&]scena=([a-z]+)/.exec(location.search), scena = m && m[1];
+  if (scena) setTimeout(function () {
+    var vm = c.vm; if (!vm) return;
+    if (scena !== 'saluto') { clearTimeout(vm._introTimer); clearTimeout(vm._fxTimer); vm.intro = 0; vm.homeFx = 0; vm.fxSlow = false; }
+    if (scena === 'barra') vm.openSidebar();
+    if (scena === 'nascondi' || scena === 'riordinata') {
+      vm.go('apps'); vm.startHide(); vm.toggleHidden(vm.apps[9]); vm.toggleHidden(vm.apps[13]);
+      vm.lf = { zone: 'grid', i: 13 };
+      if (scena === 'riordinata') { vm.finishHide(true); }
+    }
+    if (scena === 'saluto') { vm.introGreet = 'evening'; }   // l'accensione parte da sola: basta aspettare
+    if (scena === 'app') vm.go('apps');
+    if (scena === 'impostazioni') vm.go('settings');
+    if (scena === 'immagine') { vm.go('settings'); vm.handleKey(40, ''); vm.handleKey(13, ''); }
+    if (scena === 'rapide') vm.openQuick('root', false);
+    if (scena === 'sorgenti') vm.navActivate('sources');
+    if (scena === 'cerca') vm.go('keyboard', { kb: { text: 'sp' } });
+    if (scena === 'sfondi') vm.go('wallpapers');
+    if (scena === 'salvaschermo') vm.enterSaver();
+    if (scena === 'volume') { var LV = window.__CODEX_NATIVE_HOME__.layer; if (LV) { LV.vol = { on: true, level: 32, mute: false, out: true }; LV.armVol = function () {}; } else vm.vol = { on: true, level: 32, mute: false, out: false }; }
+    if (scena === 'finestra') vm.openDialog({ title: 'Spegnere la TV?', message: 'Si spegne da sola tra 60 s', buttons: [{ label: 'Spegni' }, { label: 'Riavvia' }, { label: 'Annulla' }] });
+    function tileRect() { var el = document.querySelector('[data-fx]'), r = el ? el.getBoundingClientRect() : null; return r ? { x: r.left, y: r.top, w: r.width, h: r.height } : { x: 100, y: 750, w: 260, h: 156 }; }
+    if (scena === 'apertura' || scena === 'apertura0') { var rr = tileRect(); vm.launchFx = { app: vm.apps[0], rect: rr, open: false, at: Date.now() }; if (scena === 'apertura') setTimeout(function () { vm.launchFx = Object.assign({}, vm.launchFx, { open: true }); }, 60); }
+    if (scena === 'ritorno') { c.lastLaunch = { app: vm.apps[0], rect: tileRect(), screen: 'home' }; vm.fxKind = 'app'; vm.homeFx = 2; }
+    if (scena === 'regola') { vm.go('settings'); vm.handleKey(40, ''); vm.handleKey(13, ''); setTimeout(function () { for (var i = 0; i < 3; i++) vm.handleKey(40, ''); vm.sliderEdit = true; }, 600); }
+    if (scena === 'avviso') setTimeout(function () { vm.showToast('2 app nascoste da Tutte le app.'); }, 2500);
+  }, 700);
+})();
+</script>
+</body>
+</html>

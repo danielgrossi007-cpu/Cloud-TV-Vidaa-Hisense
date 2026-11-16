@@ -1,0 +1,26 @@
+# Local config with real secrets (TV IP, audio token, machine paths)
+config.json
+**/config.json
+**/transfer-settings.json
+
+# Per-run / per-session artefacts from the tools
+**/run*.local.json
+**/*.result.json
+**/*.body.js
+**/probe.js
+**/vidaa-codex-webdriver-session-*.json
+tools/**/bench/
+tools/**/foto/
+
+# Node
+node_modules/
+npm-debug.log*
+yarn-error.log*
+
+# OS / editor
+.DS_Store
+Thumbs.db
+desktop.ini
+.vscode/
+.idea/
+*.swp

@@ -1,0 +1,5 @@
+{
+  "run": "home-REPLACE_WITH_YOUR_RUN_ID",
+  "previous": "C:/path/to/your/vidaa-probe",
+  "local": "C:/path/to/your/tv-update"
+}

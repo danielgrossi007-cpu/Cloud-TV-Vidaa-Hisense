@@ -1,0 +1,4 @@
+Icone delle app (da icone-launcher-tv-v2), ridotte a 800x480 JPG per la TV.
+La Home le riconosce da sola dal nome dell'app (CONFIG.APP_ICON_MATCH in cima a native-home.js).
+Se un'app sulla TV ha un nome diverso, aggiungila in CONFIG.APP_ICONS per appId o nome in minuscolo,
+ad esempio: { '295': 'disney-plus.jpg' }. Se un file manca, resta l'icona originale della TV.
